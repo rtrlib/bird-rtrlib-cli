@@ -1,17 +1,26 @@
-/* 
- * File:   config.h
- * Author: Mehmet
- *
- * Created on 30. März 2014, 16:38
+#ifndef BIRD_RTRLIB_CLI__CONFIG_H
+#define	BIRD_RTRLIB_CLI__CONFIG_H
+
+/**
+ * Application configuration structure.
  */
-
-#ifndef CONFIG_H
-#define	CONFIG_H
-
-#define BIRD_SOCKET_PATH_DEFAULT "/usr/local/var/run/bird.ctl"
-
 struct config {
     char *bird_socket_path;
+    char *rtr_host;
+    char *rtr_port;
 };
+
+/**
+ * Checks the specified application configuration for errors.
+ * @param 
+ * @return 
+ */
+int config_check(const struct config *);
+
+/**
+ * Initializes the specified application configuration.
+ * @param 
+ */
+void config_init(struct config *);
 
 #endif
