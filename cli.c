@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "cli.h"
+#include "config.h"
 
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state) {
