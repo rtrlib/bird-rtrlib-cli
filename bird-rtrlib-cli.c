@@ -16,23 +16,73 @@ static int bird_socket = -1;
 // RTR manager config.
 static struct rtr_mgr_config *rtr_config = 0;
 
+/**
+ * Performs cleanup on resources allocated by `init()`.
+ */
 void cleanup(void) {
     closelog();
 }
 
+/**
+ * Initializes the application prerequisites.
+ */
 void init(void) {
     openlog(NULL, LOG_PERROR | LOG_CONS | LOG_PID, LOG_DAEMON);
 }
 
+/**
+ * Callback function for RTRLib that receives PFX records, translates them to
+ * BIRD `add roa` commands, sends them to the BIRD server and fetches the
+ * answer.
+ * @param table
+ * @param record
+ * @param added
+ */
 void rtr_callback(
     struct pfx_table *table, const pfx_record record, const bool added
 ) {
-    // TODO: dummy.
-    char ip[INET6_ADDRSTRLEN];
-    ip_addr_to_str(&(record.prefix), ip, sizeof(ip));
-    fprintf(stderr, "%s %-18s %3u-%-3u %10u\n", added ? "+" : "-", ip, record.min_len, record.max_len, record.asn);
+    // IP address buffer.
+    static char ip_addr_str[INET6_ADDRSTRLEN];
+    
+    // BIRD IO buffer.
+    static char bird_buffer[80];
+    
+    // Fetch IP address as string.
+    ip_addr_to_str(&(record.prefix), ip_addr_str, sizeof(ip_addr_str));
+    
+    // Write BIRD command to buffer.
+    if (
+        snprintf(
+            bird_buffer,
+            sizeof(bird_buffer),
+            "%s roa %s/%d max %d as %d\n",
+            added ? "add" : "delete",
+            ip_addr_str,
+            record.min_len,
+            record.max_len,
+            record.asn
+        )
+        >= sizeof(bird_buffer)
+    ) {
+        syslog(LOG_ERR, "BIRD command too long.");
+        return;
+    }
+    
+    // Log the BIRD command and send it to the BIRD server.
+    syslog(LOG_INFO, "To BIRD: %s", bird_buffer);
+    write(bird_socket, bird_buffer, strlen(bird_buffer));
+    
+    // Fetch the answer and log.
+    bird_buffer[read(bird_socket, bird_buffer, sizeof(bird_buffer))] = 0;
+    syslog(LOG_INFO, "From BIRD: %s", bird_buffer);
 }
 
+/**
+ * Entry point to the BIRD RTRLib integration application.
+ * @param argc
+ * @param argv
+ * @return 
+ */
 int main(int argc, char *argv[]) {
     // Main configuration.
     struct config config;
