@@ -3,6 +3,12 @@
 
 #include "config.h"
 
+/**
+ * Checks the specified application config for errors. Returns `1` if it has no
+ * errors, or `0` otherwise.
+ * @param config
+ * @return 
+ */
 int config_check(const struct config *config) {
     // Check BIRD control socket path availability.
     if (!config->bird_socket_path) {
@@ -26,6 +32,10 @@ int config_check(const struct config *config) {
     return 1;
 }
 
+/**
+ * Initializes the specified application configuration.
+ * @param config
+ */
 void config_init(struct config *config) {
     memset(config, 0, sizeof (struct config));
 }
