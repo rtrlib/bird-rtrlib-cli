@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "config.h"
+#include "cli.h"
 
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state) {
@@ -13,7 +13,11 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
     switch (key) {
         case 'b':
             // Process BIRD socket path.
-            config->bird_socket_path = strdup(arg);
+            config->bird_socket_path = arg;
+            break;
+        case 'r':
+            config->rtr_host = strtok(arg, ":");
+            config->rtr_port = strtok(0, ":");
             break;
         default:
             // Process unknown argument.
@@ -29,6 +33,7 @@ int parse_cli(int argc, char **argv, struct config *config) {
     // Command line options definition.
     const struct argp_option argp_options[] = {
         {"bird", 'b', "BIRD_SOCKET_PATH", 0, "Path to the BIRD control socket", 0},
+        {"rtr", 'r', "RTR_ADDRESS", 0, "Address of the RTR server", 0},
         {0}
     };
 
