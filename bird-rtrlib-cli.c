@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     }
     
     // Try to connect to the RTR server and bail out on failure.
-    rtr_config = rtr_connect(config.rtr_host, config.rtr_port, &rtr_callback);
+    rtr_config = rtr_tcp_connect(config.rtr_host, config.rtr_port, &rtr_callback);
     if (!rtr_config) {
         cleanup();
         return EXIT_FAILURE;

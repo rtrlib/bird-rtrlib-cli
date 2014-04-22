@@ -85,8 +85,8 @@ static struct rtr_socket *rtr_create_rtr_socket(struct tr_socket *socket) {
  * path, with the specified user authenticated by the key pair.
  * @param host
  * @param port
- * @param username
  * @param server_hostkey_path
+ * @param username
  * @param client_privkey_path
  * @param client_pubkey_path
  * @return 
@@ -94,8 +94,8 @@ static struct rtr_socket *rtr_create_rtr_socket(struct tr_socket *socket) {
 static struct tr_ssh_config *rtr_create_ssh_config(
     const char *host,
     const unsigned int port,
-    const char *username,
     const char *server_hostkey_path,
+    const char *username,
     const char *client_privkey_path,
     const char *client_pubkey_path
 ) {
@@ -226,7 +226,46 @@ void rtr_close(struct rtr_mgr_config *rtr_mgr_config) {
     tcp_config = 0;
 }
 
-struct rtr_mgr_config *rtr_connect(
+struct rtr_mgr_config *rtr_ssh_connect(
+    const char *host, const char *port, const char *hostkey_file,
+    const char *username, const char *privkey_file, const char *pubkey_file,
+    const pfx_update_fp callback
+) {
+    // Create RTR manager config with the single server group.
+    struct rtr_mgr_config *result = rtr_create_mgr_config(
+        rtr_create_mgr_group(
+            rtr_create_rtr_socket(
+                rtr_create_ssh_socket(rtr_create_ssh_config(
+                    host,
+                    strtoul(port, 0, 10),
+                    hostkey_file,
+                    username,
+                    privkey_file,
+                    pubkey_file
+                ))
+            ),
+            1
+        ),
+        1
+    );
+    
+    // Initialize RTR manager and bail out on error.
+    if (rtr_mgr_init(result, 240, 520, callback) == RTR_ERROR) {
+        fprintf(stderr, "Error initializing RTR manager.");
+        return 0;
+    }
+    
+    // Start RTR manager and bail out on error.
+    if (rtr_mgr_start(result) == RTR_ERROR) {
+        fprintf(stderr, "Error starting RTR manager.");
+        return 0;
+    }
+    
+    // Return RTR manager config.
+    return result;
+}
+
+struct rtr_mgr_config *rtr_tcp_connect(
     const char *host, const char *port, const pfx_update_fp callback
 ) {
     // Create RTR manager config with the single server group.
@@ -255,4 +294,3 @@ struct rtr_mgr_config *rtr_connect(
     // Return RTR manager config.
     return result;
 }
-
