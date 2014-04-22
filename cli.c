@@ -4,6 +4,14 @@
 
 #include "config.h"
 
+#define ARGKEY_BIRD_SOCKET 'b'
+#define ARGKEY_RTR_ADDRESS 'r'
+#define ARGKEY_RTRSSH_ENABLE 's'
+#define ARGKEY_RTRSSH_HOSTKEY 0x100
+#define ARGKEY_RTRSSH_USERNAME 0x101
+#define ARGKEY_RTRSSH_PRIVKEY 0x102
+#define ARGKEY_RTRSSH_PUBKEY 0x103
+
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state) {
     // Shortcut to config object passed to argp_parse().
@@ -11,13 +19,28 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
 
     // Process command line argument.
     switch (key) {
-        case 'b':
+        case ARGKEY_BIRD_SOCKET:
             // Process BIRD socket path.
             config->bird_socket_path = arg;
             break;
-        case 'r':
+        case ARGKEY_RTR_ADDRESS:
             config->rtr_host = strtok(arg, ":");
             config->rtr_port = strtok(0, ":");
+            break;
+        case ARGKEY_RTRSSH_ENABLE:
+            config->rtr_connection_type = ssh;
+            break;
+        case ARGKEY_RTRSSH_USERNAME:
+            config->rtr_ssh_username = arg;
+            break;
+        case ARGKEY_RTRSSH_HOSTKEY:
+            config->rtr_ssh_hostkey_file = arg;
+            break;
+        case ARGKEY_RTRSSH_PRIVKEY:
+            config->rtr_ssh_privkey_file = arg;
+            break;
+        case ARGKEY_RTRSSH_PUBKEY:
+            config->rtr_ssh_pubkey_file = arg;
             break;
         default:
             // Process unknown argument.
@@ -32,8 +55,68 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
 int parse_cli(int argc, char **argv, struct config *config) {
     // Command line options definition.
     const struct argp_option argp_options[] = {
-        {"bird", 'b', "BIRD_SOCKET_PATH", 0, "Path to the BIRD control socket", 0},
-        {"rtr", 'r', "RTR_ADDRESS", 0, "Address of the RTR server", 0},
+        {
+            "bird-socket",
+            ARGKEY_BIRD_SOCKET,
+            "<BIRD_SOCKET_PATH>",
+            0,
+            "Path to the BIRD control socket.",
+            0
+        },
+        {
+            "rtr-address",
+            ARGKEY_RTR_ADDRESS,
+            "<RTR_HOST>:<RTR_PORT>",
+            0,
+            "Address of the RTR server.",
+            1
+        },
+        {
+            "ssh",
+            ARGKEY_RTRSSH_ENABLE,
+            0,
+            0,
+            "Use an SSH connection instead of plain TCP.",
+            1
+        },
+        {
+            "rtr-ssh-hostkey",
+            ARGKEY_RTRSSH_HOSTKEY,
+            "<RTR_SSH_HOSTKEY_FILE>",
+            0,
+            "(optional) Path to a file containing the SSH host key of the RTR "
+            "server. Uses the default known_hosts file if not specified.",
+            2
+        },
+        {
+            "rtr-ssh-username",
+            ARGKEY_RTRSSH_USERNAME,
+            "<RTR_SSH_USERNAME>",
+            0,
+            "Name of the user to be authenticated with the RTR server. "
+            "Mandatory for SSH connections.",
+            2
+        },
+        {
+            "rtr-ssh-privkey",
+            ARGKEY_RTRSSH_PRIVKEY,
+            "<RTR_SSH_PRIVKEY_FILE>",
+            0,
+            "(optional) Path to a file containing the private key of the user "
+            "to be authenticated with the RTR server if an SSH connection is "
+            "used. Uses the user's default identity file if not specified.",
+            2
+        },
+        {
+            "rtr-ssh-pubkey",
+            ARGKEY_RTRSSH_PUBKEY,
+            "<RTR_SSH_PUBKEY_FILE>",
+            0,
+            "(optional) Path to a file containing the public key of the user "
+            "to be authenticated with the RTR server if an SSH connection is "
+            "used. Uses the user's default public key file if not specified.",
+            2
+        },
         {0}
     };
 
