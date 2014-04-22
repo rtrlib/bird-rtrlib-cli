@@ -28,6 +28,15 @@ int config_check(const struct config *config) {
         return 0;
     }
     
+    // Checks to be done for SSH connections.
+    if (config->rtr_connection_type == ssh) {
+        // Check SSH username availability.
+        if (!config->rtr_ssh_username) {
+            fprintf(stderr, "Missing SSH username.");
+            return 0;
+        }
+    }
+    
     // Return success.
     return 1;
 }
@@ -37,5 +46,9 @@ int config_check(const struct config *config) {
  * @param config
  */
 void config_init(struct config *config) {
+    // Reset memory.
     memset(config, 0, sizeof (struct config));
+    
+    // Default connection type is TCP.
+    config->rtr_connection_type = tcp;
 }
