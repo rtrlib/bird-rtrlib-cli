@@ -5,7 +5,7 @@
 enum connection_type {
     // Plain TCP connection
     tcp,
-    
+
     // SSH connection
     ssh
 };
@@ -26,14 +26,14 @@ struct config {
 
 /**
  * Checks the specified application configuration for errors.
- * @param 
- * @return 
+ * @param
+ * @return
  */
 int config_check(const struct config *);
 
 /**
  * Initializes the specified application configuration.
- * @param 
+ * @param
  */
 void config_init(struct config *);
 

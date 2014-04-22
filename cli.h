@@ -5,10 +5,10 @@
 
 /**
  * Parses the specified command line into the specified application config.
- * @param 
- * @param 
- * @param 
- * @return 
+ * @param
+ * @param
+ * @param
+ * @return
  */
 int parse_cli(int, char **, struct config *);
 

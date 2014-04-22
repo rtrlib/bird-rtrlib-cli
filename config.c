@@ -7,7 +7,7 @@
  * Checks the specified application config for errors. Returns `1` if it has no
  * errors, or `0` otherwise.
  * @param config
- * @return 
+ * @return
  */
 int config_check(const struct config *config) {
     // Check BIRD control socket path availability.
@@ -15,19 +15,19 @@ int config_check(const struct config *config) {
         fprintf(stderr, "Missing path to BIRD control socket.");
         return 0;
     }
-    
+
     // Check RTR host availability.
     if (!config->rtr_host) {
         fprintf(stderr, "Missing RTR server host.");
         return 0;
     }
-    
+
     // Check RTR port availability.
     if (!config->rtr_port) {
         fprintf(stderr, "Missing RTR server port.");
         return 0;
     }
-    
+
     // Checks to be done for SSH connections.
     if (config->rtr_connection_type == ssh) {
         // Check SSH username availability.
@@ -36,7 +36,7 @@ int config_check(const struct config *config) {
             return 0;
         }
     }
-    
+
     // Return success.
     return 1;
 }
@@ -48,7 +48,7 @@ int config_check(const struct config *config) {
 void config_init(struct config *config) {
     // Reset memory.
     memset(config, 0, sizeof (struct config));
-    
+
     // Default connection type is TCP.
     config->rtr_connection_type = tcp;
 }

@@ -4,12 +4,15 @@
 #include <sys/un.h>
 
 /**
- * 
+ * Connects to the BIRD daemon listening at the specified socket. Returns the
+ * socket on success or -1 on failure.
+ * @param socket_path
+ * @return
  */
 int bird_connect(const char *socket_path) {
     // Result value containing the socket to the BIRD.
     int bird_socket = -1;
-    
+
     // Socket address to the BIRD.
     struct sockaddr_un addr;
 
@@ -30,16 +33,14 @@ int bird_connect(const char *socket_path) {
     memset(&addr, 0, sizeof addr);
     addr.sun_family = AF_UNIX;
     strcpy(addr.sun_path, socket_path);
-    
+
     // Try to connect to BIRD.
     if (connect(bird_socket, (struct sockaddr *) &addr, sizeof addr) == -1) {
         syslog(LOG_EMERG, "BIRD connection to %s failed: %m", socket_path);
         close(bird_socket);
         return -1;
     }
-    
-    // TODO: Async connection.
-    
+
     // Return socket.
     return bird_socket;
 }

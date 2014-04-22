@@ -19,7 +19,7 @@
  * authentication with the SSH server. If set to a null pointer, the user's
  * default public key is used.
  * @param callback
- * @return 
+ * @return
  */
 struct rtr_mgr_config *rtr_ssh_connect(
     const char *, const char *, const char *, const char *, const char *,
@@ -33,7 +33,7 @@ struct rtr_mgr_config *rtr_ssh_connect(
  * @param host
  * @param port
  * @param callback
- * @return 
+ * @return
  */
 struct rtr_mgr_config *rtr_tcp_connect(
     const char *, const char *, const pfx_update_fp
