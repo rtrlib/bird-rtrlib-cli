@@ -80,6 +80,71 @@ static struct rtr_socket *rtr_create_rtr_socket(struct tr_socket *socket) {
 }
 
 /**
+ * Creates and returns a new `tr_ssh_config` structure for an SSH connection to
+ * the specified specified host and port, authenticated by the optional hostkey
+ * path, with the specified user authenticated by the key pair.
+ * @param host
+ * @param port
+ * @param username
+ * @param server_hostkey_path
+ * @param client_privkey_path
+ * @param client_pubkey_path
+ * @return 
+ */
+static struct tr_ssh_config *rtr_create_ssh_config(
+    const char *host,
+    const unsigned int port,
+    const char *username,
+    const char *server_hostkey_path,
+    const char *client_privkey_path,
+    const char *client_pubkey_path
+) {
+    // Initialize result.
+    struct tr_ssh_config *result = malloc(sizeof (struct tr_ssh_config));
+    memset(result, 0, sizeof (struct tr_ssh_config));
+    
+    // Assign host, port and username (mandatory).
+    result->host = strdup(host);
+    result->port = port;
+    result->username = strdup(username);
+    
+    // Assign key paths (optional).
+    if (server_hostkey_path)
+        result->server_hostkey_path = strdup(server_hostkey_path);
+    if (client_privkey_path)
+        result->client_privkey_path = strdup(client_privkey_path);
+    if (client_pubkey_path)
+        result->client_pubkey_path = strdup(client_pubkey_path);
+    
+    // Return result.
+    return result;
+}
+
+/**
+ * Creates, initializes (using `tr_ssh_init()`) and returns a `tr_socket`
+ * structure from the specified `tr_ssh_config` structure for SSH connections to
+ * an RTR server.
+ * @param config
+ * @return 
+ */
+static struct tr_socket *rtr_create_ssh_socket(
+    const struct tr_ssh_config *config
+) {
+    // Initialize result.
+    struct tr_socket *result = malloc(sizeof (struct tr_socket));
+    memset(result, 0, sizeof (struct tr_socket));
+    
+    // Initialize TCP socket.
+    if (tr_ssh_init(config, result) != TR_SUCCESS) {
+        fprintf(stderr, "Could not initialize TCP socket.");
+        return 0;
+    };
+    
+    // Return result.
+    return result;    
+}
+
+/**
  * Creates and returns a new `tr_tcp_config` structure from the specified host
  * and port.
  * @param host
@@ -106,7 +171,8 @@ static struct tr_tcp_config *rtr_create_tcp_config(
 
 /**
  * Creates, initializes (using `tr_tcp_init()`) and returns a `tr_socket`
- * structure from the specified `tr_tcp_config` structure.
+ * structure from the specified `tr_tcp_config` structure for TCP connections to
+ * an RTR server.
  * @param config
  * @return 
  */
