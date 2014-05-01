@@ -1,3 +1,24 @@
+/*
+ * This file is part of BIRD-RTRlib-CLI.
+ *
+ * BIRD-RTRlib-CLI is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * BIRD-RTRlib-CLI is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with BIRD-RTRlib-CLI; see the file COPYING.
+ *
+ * written by Mehmet Ceyran, in cooperation with:
+ * CST group, Freie Universitaet Berlin
+ * Website: https://github.com/rtrlib/bird-rtrlib-cli
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -220,7 +241,7 @@ void rtr_close(struct rtr_mgr_config *rtr_mgr_config) {
     // Free groups and the config itself.
     free(rtr_mgr_config->groups);
     free(rtr_mgr_config);
-    
+
     // Free tr_tcp_config structure. TODO: Delete when RTRLIB copies and frees.
     free(tcp_config);
     tcp_config = 0;
