@@ -34,6 +34,16 @@
 // Socket to BIRD.
 static int bird_socket = -1;
 
+// Buffer for BIRD commands.
+static char *bird_command = 0;
+
+// Length of buffer for BIRD commands.
+static size_t bird_command_length = -1;
+
+// "add roa" BIRD command "table" part. Defaults to an empty string and becomes
+// "table " + config->bird_roa_table if provided.
+static char *bird_add_roa_table_arg = "";
+
 // RTR manager config.
 static struct rtr_mgr_config *rtr_config = 0;
 
@@ -52,6 +62,44 @@ void init(void) {
 }
 
 /**
+ * Creates and populates the "add roa" command's "table" argument buffer.
+ * @param bird_roa_table
+ */
+void init_bird_add_roa_table_arg(char *bird_roa_table) {
+    // Size of the buffer (" table " + <roa_table> + \0).
+    const size_t length = (8 + strlen(bird_roa_table)) * sizeof (char);
+
+    // Allocate buffer.
+    bird_add_roa_table_arg = malloc(length);
+
+    // Populate buffer.
+    snprintf(bird_add_roa_table_arg, length, " table %s", bird_roa_table);
+}
+
+/**
+ * Creates the buffer for the "add roa" command.
+ */
+void init_bird_command(void) {
+    // Size of the buffer ("add roa " + <addr> + "/" + <minlen> + " max " +
+    // <maxlen> + " as " + <asnum> + <bird_add_roa_table_cmd> + \0)
+    bird_command_length = (
+        8 + // "add roa "
+        39 + // maxlength of IPv6 address
+        1 + // "/"
+        3 + // minimum length, "0" .. "128"
+        5 + // " max "
+        3 + // maximum length, "0" .. "128"
+        4 + // " as "
+        10 + // asnum, "0" .. "2^32 - 1" (max 10 chars)
+        strlen(bird_add_roa_table_arg) + // length of fixed " table " + <table>
+        1 // \0
+    ) * sizeof (char);
+
+    // Allocate buffer.
+    bird_command = malloc(bird_command_length);
+}
+
+/**
  * Callback function for RTRLib that receives PFX records, translates them to
  * BIRD `add roa` commands, sends them to the BIRD server and fetches the
  * answer.
@@ -65,8 +113,8 @@ void rtr_callback(
     // IP address buffer.
     static char ip_addr_str[INET6_ADDRSTRLEN];
 
-    // BIRD IO buffer.
-    static char bird_buffer[80];
+    // Buffer for BIRD response.
+    static char bird_response[200];
 
     // Fetch IP address as string.
     ip_addr_to_str(&(record.prefix), ip_addr_str, sizeof(ip_addr_str));
@@ -74,28 +122,29 @@ void rtr_callback(
     // Write BIRD command to buffer.
     if (
         snprintf(
-            bird_buffer,
-            sizeof(bird_buffer),
-            "%s roa %s/%d max %d as %d\n",
+            bird_command,
+            bird_command_length,
+            "%s roa %s/%d max %d as %d%s\n",
             added ? "add" : "delete",
             ip_addr_str,
             record.min_len,
             record.max_len,
-            record.asn
+            record.asn,
+            bird_add_roa_table_arg
         )
-        >= sizeof(bird_buffer)
+        >= bird_command_length
     ) {
         syslog(LOG_ERR, "BIRD command too long.");
         return;
     }
 
     // Log the BIRD command and send it to the BIRD server.
-    syslog(LOG_INFO, "To BIRD: %s", bird_buffer);
-    write(bird_socket, bird_buffer, strlen(bird_buffer));
+    syslog(LOG_INFO, "To BIRD: %s", bird_command);
+    write(bird_socket, bird_command, strlen(bird_command));
 
     // Fetch the answer and log.
-    bird_buffer[read(bird_socket, bird_buffer, sizeof(bird_buffer))] = 0;
-    syslog(LOG_INFO, "From BIRD: %s", bird_buffer);
+    bird_response[read(bird_socket, bird_response, sizeof bird_response)] = 0;
+    syslog(LOG_INFO, "From BIRD: %s", bird_response);
 }
 
 /**
@@ -129,6 +178,14 @@ int main(int argc, char *argv[]) {
         cleanup();
         return EXIT_FAILURE;
     }
+
+    // Setup BIRD ROA table command argument.
+    if (config.bird_roa_table) {
+        init_bird_add_roa_table_arg(config.bird_roa_table);
+    }
+
+    // Setup BIRD command buffer.
+    init_bird_command();
 
     // Try to connect to BIRD and bail out on failure.
     bird_socket = bird_connect(config.bird_socket_path);

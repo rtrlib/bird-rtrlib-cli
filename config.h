@@ -36,6 +36,7 @@ enum connection_type {
  */
 struct config {
     char *bird_socket_path;
+    char *bird_roa_table;
     enum connection_type rtr_connection_type;
     char *rtr_host;
     char *rtr_port;

@@ -26,6 +26,7 @@
 #include "config.h"
 
 #define ARGKEY_BIRD_SOCKET 'b'
+#define ARGKEY_BIRD_ROA_TABLE 't'
 #define ARGKEY_RTR_ADDRESS 'r'
 #define ARGKEY_RTRSSH_ENABLE 's'
 #define ARGKEY_RTRSSH_HOSTKEY 0x100
@@ -43,6 +44,9 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
         case ARGKEY_BIRD_SOCKET:
             // Process BIRD socket path.
             config->bird_socket_path = arg;
+            break;
+        case ARGKEY_BIRD_ROA_TABLE:
+            config->bird_roa_table = arg;
             break;
         case ARGKEY_RTR_ADDRESS:
             config->rtr_host = strtok(arg, ":");
@@ -82,6 +86,14 @@ int parse_cli(int argc, char **argv, struct config *config) {
             "<BIRD_SOCKET_PATH>",
             0,
             "Path to the BIRD control socket.",
+            0
+        },
+        {
+            "bird-roa-table",
+            ARGKEY_BIRD_ROA_TABLE,
+            "<BIRD_ROA_TABLE>",
+            0,
+            "(optional) Name of the BIRD ROA table for RPKI ROA imports.",
             0
         },
         {
