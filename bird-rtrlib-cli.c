@@ -55,6 +55,28 @@ void cleanup(void) {
 }
 
 /**
+ * Frees memory allocated with the " table <bird_roa_table>" clause for the
+ * "add roa" BIRD command.
+ */
+void cleanup_bird_add_roa_table_arg(void) {
+    // If the buffer is "", it has never been changed, thus there is no malloc'd
+    // buffer.
+    if (strcmp(bird_add_roa_table_arg, "") != 0)
+        free(bird_add_roa_table_arg);
+}
+
+/**
+ * Frees memory allocated with the BIRD command buffer.
+ */
+void cleanup_bird_command(void) {
+    if (bird_command) {
+        free(bird_command);
+        bird_command = 0;
+        bird_command_length = -1;
+    }
+}
+
+/**
  * Initializes the application prerequisites.
  */
 void init(void) {
@@ -228,6 +250,10 @@ int main(int argc, char *argv[]) {
 
     // Close BIRD socket.
     close(bird_socket);
+
+    // Cleanup memory.
+    cleanup_bird_command();
+    cleanup_bird_add_roa_table_arg();
 
     // Cleanup framework.
     cleanup();
