@@ -17,7 +17,7 @@ Requierements
 -------------
 
 To build the command line interface, (1) the CMake build system, (2)
-RTRlib, and (3) BIRD must be installed.
+RTRlib with SSH support, and (3) BIRD must be installed.
 
 
 Compilation
