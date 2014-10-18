@@ -25,14 +25,14 @@
 
 #include "config.h"
 
-#define ARGKEY_BIRD_SOCKET 'b'
 #define ARGKEY_BIRD_ROA_TABLE 't'
+#define ARGKEY_BIRD_SOCKET 'b'
 #define ARGKEY_RTR_ADDRESS 'r'
 #define ARGKEY_RTRSSH_ENABLE 's'
 #define ARGKEY_RTRSSH_HOSTKEY 0x100
-#define ARGKEY_RTRSSH_USERNAME 0x101
-#define ARGKEY_RTRSSH_PRIVKEY 0x102
-#define ARGKEY_RTRSSH_PUBKEY 0x103
+#define ARGKEY_RTRSSH_PRIVKEY 0x101
+#define ARGKEY_RTRSSH_PUBKEY 0x102
+#define ARGKEY_RTRSSH_USERNAME 0x103
 
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state) {
@@ -41,12 +41,12 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
 
     // Process command line argument.
     switch (key) {
+        case ARGKEY_BIRD_ROA_TABLE:
+            config->bird_roa_table = arg;
+            break;
         case ARGKEY_BIRD_SOCKET:
             // Process BIRD socket path.
             config->bird_socket_path = arg;
-            break;
-        case ARGKEY_BIRD_ROA_TABLE:
-            config->bird_roa_table = arg;
             break;
         case ARGKEY_RTR_ADDRESS:
             config->rtr_host = strtok(arg, ":");
@@ -54,9 +54,6 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             break;
         case ARGKEY_RTRSSH_ENABLE:
             config->rtr_connection_type = ssh;
-            break;
-        case ARGKEY_RTRSSH_USERNAME:
-            config->rtr_ssh_username = arg;
             break;
         case ARGKEY_RTRSSH_HOSTKEY:
             config->rtr_ssh_hostkey_file = arg;
@@ -66,6 +63,9 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             break;
         case ARGKEY_RTRSSH_PUBKEY:
             config->rtr_ssh_pubkey_file = arg;
+            break;
+        case ARGKEY_RTRSSH_USERNAME:
+            config->rtr_ssh_username = arg;
             break;
         default:
             // Process unknown argument.
