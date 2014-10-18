@@ -115,6 +115,7 @@ static struct rtr_socket *rtr_create_rtr_socket(struct tr_socket *socket) {
 static struct tr_ssh_config *rtr_create_ssh_config(
     const char *host,
     const unsigned int port,
+    const char *bindaddr,
     const char *server_hostkey_path,
     const char *username,
     const char *client_privkey_path,
@@ -128,6 +129,10 @@ static struct tr_ssh_config *rtr_create_ssh_config(
     result->host = strdup(host);
     result->port = port;
     result->username = strdup(username);
+
+    // Assign bind address if available.
+    if (bindaddr)
+        result->bindaddr = strdup(bindaddr);
 
     // Assign key paths (optional).
     if (server_hostkey_path)
@@ -173,7 +178,7 @@ static struct tr_socket *rtr_create_ssh_socket(
  * @return
  */
 static struct tr_tcp_config *rtr_create_tcp_config(
-    const char *host, const char *port
+    const char *host, const char *port, const char *bindaddr
 ) {
     // Initialize result.
     struct tr_tcp_config *result = malloc(sizeof (struct tr_tcp_config));
@@ -182,6 +187,7 @@ static struct tr_tcp_config *rtr_create_tcp_config(
     // Populate result.
     result->host = strdup(host);
     result->port = strdup(port);
+    result->bindaddr = strdup(bindaddr);
 
     // Store result in static variable until RTRLIB copies and frees the config.
     tcp_config = result;
@@ -248,9 +254,9 @@ void rtr_close(struct rtr_mgr_config *rtr_mgr_config) {
 }
 
 struct rtr_mgr_config *rtr_ssh_connect(
-    const char *host, const char *port, const char *hostkey_file,
-    const char *username, const char *privkey_file, const char *pubkey_file,
-    const pfx_update_fp callback
+    const char *host, const char *port, const char *bindaddr,
+    const char *hostkey_file, const char *username, const char *privkey_file,
+    const char *pubkey_file, const pfx_update_fp callback
 ) {
     // Create RTR manager config with the single server group.
     struct rtr_mgr_config *result = rtr_create_mgr_config(
@@ -259,6 +265,7 @@ struct rtr_mgr_config *rtr_ssh_connect(
                 rtr_create_ssh_socket(rtr_create_ssh_config(
                     host,
                     strtoul(port, 0, 10),
+                    bindaddr,
                     hostkey_file,
                     username,
                     privkey_file,
@@ -287,13 +294,16 @@ struct rtr_mgr_config *rtr_ssh_connect(
 }
 
 struct rtr_mgr_config *rtr_tcp_connect(
-    const char *host, const char *port, const pfx_update_fp callback
+    const char *host, const char *port, const char *bindaddr,
+    const pfx_update_fp callback
 ) {
     // Create RTR manager config with the single server group.
     struct rtr_mgr_config *result = rtr_create_mgr_config(
         rtr_create_mgr_group(
             rtr_create_rtr_socket(
-                rtr_create_tcp_socket(rtr_create_tcp_config(host, port))
+                rtr_create_tcp_socket(
+                    rtr_create_tcp_config(host, port, bindaddr)
+                )
             ),
             1
         ),

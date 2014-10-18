@@ -30,6 +30,8 @@
  * Returns a null pointer on error.
  * @param host host name of the SSH server.
  * @param port port number of the SSH server in string representation.
+ * @param bindaddr host name or IP address the RTR connection shall be made from
+ * (null pointer for any).
  * @param hostkey_file path to a file containing the host key of the specified
  * server. If set to a null pointer, the default known_hosts file is used.
  * @param username name of the user to be authenticated with the SSH server.
@@ -39,25 +41,26 @@
  * @param pubkey_file path to a file containing the public key to be used for
  * authentication with the SSH server. If set to a null pointer, the user's
  * default public key is used.
- * @param callback
+ * @param callback callback function for RTR updates.
  * @return
  */
 struct rtr_mgr_config *rtr_ssh_connect(
     const char *, const char *, const char *, const char *, const char *,
-    const char *, const pfx_update_fp
+    const char *, const char *, const pfx_update_fp
 );
 
 /**
- * Connects to the RTR server at the specified address and port with plain TCP
- * using the specified callback function for RTR updates and returns the
+ * Connects to the RTR server with the specified parameters and returns the
  * corresponding `rtr_mgr_config` structure. Returns a null pointer on error.
- * @param host
- * @param port
- * @param callback
+ * @param host host name of the TCP server.
+ * @param port port number of the TCP server in string representation.
+ * @param bindaddr host name or IP address the RTR connection shall be made from
+ * (null pointer for any).
+ * @param callback callback function for RTR updates.
  * @return
  */
 struct rtr_mgr_config *rtr_tcp_connect(
-    const char *, const char *, const pfx_update_fp
+    const char *, const char *, const char *, const pfx_update_fp
 );
 
 /**

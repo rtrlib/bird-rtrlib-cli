@@ -222,14 +222,16 @@ int main(int argc, char *argv[]) {
     switch (config.rtr_connection_type) {
         case tcp:
             rtr_config = rtr_tcp_connect(
-                config.rtr_host, config.rtr_port, &rtr_callback
+                config.rtr_host, config.rtr_port, config.rtr_bind_addr,
+                &rtr_callback
             );
             break;
         case ssh:
             rtr_config = rtr_ssh_connect(
-                config.rtr_host, config.rtr_port, config.rtr_ssh_hostkey_file,
-                config.rtr_ssh_username, config.rtr_ssh_privkey_file,
-                config.rtr_ssh_pubkey_file, &rtr_callback
+                config.rtr_host, config.rtr_port, config.rtr_bind_addr,
+                config.rtr_ssh_hostkey_file, config.rtr_ssh_username,
+                config.rtr_ssh_privkey_file, config.rtr_ssh_pubkey_file,
+                &rtr_callback
             );
             break;
     }
