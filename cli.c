@@ -28,11 +28,12 @@
 #define ARGKEY_BIRD_ROA_TABLE 't'
 #define ARGKEY_BIRD_SOCKET 'b'
 #define ARGKEY_RTR_ADDRESS 'r'
+#define ARGKEY_RTR_SOURCE_ADDRESS 0x100
 #define ARGKEY_RTRSSH_ENABLE 's'
-#define ARGKEY_RTRSSH_HOSTKEY 0x100
-#define ARGKEY_RTRSSH_PRIVKEY 0x101
-#define ARGKEY_RTRSSH_PUBKEY 0x102
-#define ARGKEY_RTRSSH_USERNAME 0x103
+#define ARGKEY_RTRSSH_HOSTKEY 0x101
+#define ARGKEY_RTRSSH_PRIVKEY 0x102
+#define ARGKEY_RTRSSH_PUBKEY 0x103
+#define ARGKEY_RTRSSH_USERNAME 0x104
 
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state) {
@@ -51,6 +52,9 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
         case ARGKEY_RTR_ADDRESS:
             config->rtr_host = strtok(arg, ":");
             config->rtr_port = strtok(0, ":");
+            break;
+        case ARGKEY_RTR_SOURCE_ADDRESS:
+            config->rtr_bind_addr = arg;
             break;
         case ARGKEY_RTRSSH_ENABLE:
             config->rtr_connection_type = ssh;
@@ -102,6 +106,14 @@ int parse_cli(int argc, char **argv, struct config *config) {
             "<RTR_HOST>:<RTR_PORT>",
             0,
             "Address of the RTR server.",
+            1
+        },
+        {
+            "rtr-source-address",
+            ARGKEY_RTR_SOURCE_ADDRESS,
+            "<RTR_SOURCE_ADDRESS>",
+            0,
+            "(optional) Source address of the connection to the RTR server.",
             1
         },
         {

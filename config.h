@@ -40,6 +40,7 @@ struct config {
     enum connection_type rtr_connection_type;
     char *rtr_host;
     char *rtr_port;
+    char *rtr_bind_addr;
     char *rtr_ssh_username;
     char *rtr_ssh_hostkey_file;
     char *rtr_ssh_privkey_file;
