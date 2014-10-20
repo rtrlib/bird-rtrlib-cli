@@ -131,7 +131,7 @@ void init_bird_command(void) {
  * @param added
  */
 void rtr_callback(
-    struct pfx_table *table, const pfx_record record, const bool added
+    struct pfx_table *table, const struct pfx_record record, const bool added
 ) {
     // IP address buffer.
     static char ip_addr_str[INET6_ADDRSTRLEN];
@@ -230,8 +230,7 @@ int main(int argc, char *argv[]) {
             rtr_config = rtr_ssh_connect(
                 config.rtr_host, config.rtr_port, config.rtr_bind_addr,
                 config.rtr_ssh_hostkey_file, config.rtr_ssh_username,
-                config.rtr_ssh_privkey_file, config.rtr_ssh_pubkey_file,
-                &rtr_callback
+                config.rtr_ssh_privkey_file, &rtr_callback
             );
             break;
     }

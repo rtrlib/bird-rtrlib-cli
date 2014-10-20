@@ -44,7 +44,6 @@ struct config {
     char *rtr_ssh_username;
     char *rtr_ssh_hostkey_file;
     char *rtr_ssh_privkey_file;
-    char *rtr_ssh_pubkey_file;
 };
 
 /**

@@ -38,15 +38,12 @@
  * @param privkey_file path to a file containing the private key to be used for
  * authentication with the SSH server. If set to a null pointer, the user's
  * default identity is used.
- * @param pubkey_file path to a file containing the public key to be used for
- * authentication with the SSH server. If set to a null pointer, the user's
- * default public key is used.
  * @param callback callback function for RTR updates.
  * @return
  */
 struct rtr_mgr_config *rtr_ssh_connect(
     const char *, const char *, const char *, const char *, const char *,
-    const char *, const char *, const pfx_update_fp
+    const char *, const pfx_update_fp
 );
 
 /**

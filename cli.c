@@ -32,8 +32,7 @@
 #define ARGKEY_RTRSSH_ENABLE 's'
 #define ARGKEY_RTRSSH_HOSTKEY 0x101
 #define ARGKEY_RTRSSH_PRIVKEY 0x102
-#define ARGKEY_RTRSSH_PUBKEY 0x103
-#define ARGKEY_RTRSSH_USERNAME 0x104
+#define ARGKEY_RTRSSH_USERNAME 0x103
 
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state) {
@@ -64,9 +63,6 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             break;
         case ARGKEY_RTRSSH_PRIVKEY:
             config->rtr_ssh_privkey_file = arg;
-            break;
-        case ARGKEY_RTRSSH_PUBKEY:
-            config->rtr_ssh_pubkey_file = arg;
             break;
         case ARGKEY_RTRSSH_USERNAME:
             config->rtr_ssh_username = arg;
@@ -150,16 +146,6 @@ int parse_cli(int argc, char **argv, struct config *config) {
             "(optional) Path to a file containing the private key of the user "
             "to be authenticated with the RTR server if an SSH connection is "
             "used. Uses the user's default identity file if not specified.",
-            2
-        },
-        {
-            "rtr-ssh-pubkey",
-            ARGKEY_RTRSSH_PUBKEY,
-            "<RTR_SSH_PUBKEY_FILE>",
-            0,
-            "(optional) Path to a file containing the public key of the user "
-            "to be authenticated with the RTR server if an SSH connection is "
-            "used. Uses the user's default public key file if not specified.",
             2
         },
         {0}
