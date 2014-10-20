@@ -30,46 +30,21 @@
 static struct tr_tcp_config *tcp_config = 0;
 
 /**
- * Creates and returns an `rtr_mgr_config` structure from the specified
- * `rtr_mgr_group` structure.
- * @param groups
- * @return
- */
-static struct rtr_mgr_config *rtr_create_mgr_config(
-    rtr_mgr_group *groups, unsigned int count
-) {
-    // Initialize result.
-    struct rtr_mgr_config *result = malloc(sizeof (struct rtr_mgr_config));
-    memset(result, 0, sizeof (struct rtr_mgr_config));
-
-    // Populate result.
-    result->groups = groups;
-    result->len = count;
-
-    // Return result.
-    return result;
-}
-
-/**
  * Creates and returns a `rtr_mgr_group` structure from the specified
  * `rtr_socket` structure array containing the specified number of elements.
  * @param rtr_socket
  * @param count
  * @return
  */
-static rtr_mgr_group *rtr_create_mgr_group(
+static struct rtr_mgr_group *rtr_create_mgr_group(
     struct rtr_socket *sockets, unsigned int count
 ) {
-    // Create a prototype rtr_mgr_group to be able to retrieve its size.
-    // TODO: Remove when rtr_mgr_group is not an anonymous struct anymore.
-    rtr_mgr_group prototype;
-
     // Iterator.
     unsigned int i;
 
     // Initialize result.
-    rtr_mgr_group *result = malloc(sizeof prototype); // TODO: see above
-    memset(result, 0, sizeof prototype); // TODO: see above.
+    struct rtr_mgr_group *result = malloc(sizeof (struct rtr_mgr_group));
+    memset(result, 0, sizeof (struct rtr_mgr_group));
 
     // Populate result.
     result->sockets = malloc(count * sizeof (struct rtr_socket *));
@@ -109,7 +84,6 @@ static struct rtr_socket *rtr_create_rtr_socket(struct tr_socket *socket) {
  * @param server_hostkey_path
  * @param username
  * @param client_privkey_path
- * @param client_pubkey_path
  * @return
  */
 static struct tr_ssh_config *rtr_create_ssh_config(
@@ -117,8 +91,7 @@ static struct tr_ssh_config *rtr_create_ssh_config(
     const unsigned int port,
     const char *server_hostkey_path,
     const char *username,
-    const char *client_privkey_path,
-    const char *client_pubkey_path
+    const char *client_privkey_path
 ) {
     // Initialize result.
     struct tr_ssh_config *result = malloc(sizeof (struct tr_ssh_config));
@@ -134,8 +107,6 @@ static struct tr_ssh_config *rtr_create_ssh_config(
         result->server_hostkey_path = strdup(server_hostkey_path);
     if (client_privkey_path)
         result->client_privkey_path = strdup(client_privkey_path);
-    if (client_pubkey_path)
-        result->client_pubkey_path = strdup(client_pubkey_path);
 
     // Return result.
     return result;
@@ -249,29 +220,29 @@ void rtr_close(struct rtr_mgr_config *rtr_mgr_config) {
 
 struct rtr_mgr_config *rtr_ssh_connect(
     const char *host, const char *port, const char *hostkey_file,
-    const char *username, const char *privkey_file, const char *pubkey_file,
+    const char *username, const char *privkey_file,
     const pfx_update_fp callback
 ) {
-    // Create RTR manager config with the single server group.
-    struct rtr_mgr_config *result = rtr_create_mgr_config(
-        rtr_create_mgr_group(
-            rtr_create_rtr_socket(
-                rtr_create_ssh_socket(rtr_create_ssh_config(
-                    host,
-                    strtoul(port, 0, 10),
-                    hostkey_file,
-                    username,
-                    privkey_file,
-                    pubkey_file
-                ))
-            ),
-            1
+    // Prepare pointer to result config.
+    struct rtr_mgr_config *result;
+
+    // Create the single server group.
+    struct rtr_mgr_group *group = rtr_create_mgr_group(
+        rtr_create_rtr_socket(
+            rtr_create_ssh_socket(rtr_create_ssh_config(
+                host,
+                strtoul(port, 0, 10),
+                hostkey_file,
+                username,
+                privkey_file
+            ))
         ),
         1
     );
 
     // Initialize RTR manager and bail out on error.
-    if (rtr_mgr_init(result, 240, 520, callback) == RTR_ERROR) {
+    result = rtr_mgr_init(group, 1, 240, 520, callback, 0, 0);
+    if (!result) {
         fprintf(stderr, "Error initializing RTR manager.");
         return 0;
     }
@@ -289,19 +260,20 @@ struct rtr_mgr_config *rtr_ssh_connect(
 struct rtr_mgr_config *rtr_tcp_connect(
     const char *host, const char *port, const pfx_update_fp callback
 ) {
-    // Create RTR manager config with the single server group.
-    struct rtr_mgr_config *result = rtr_create_mgr_config(
-        rtr_create_mgr_group(
-            rtr_create_rtr_socket(
-                rtr_create_tcp_socket(rtr_create_tcp_config(host, port))
-            ),
-            1
+    // Prepare pointer to result config.
+    struct rtr_mgr_config *result;
+
+    // Create the single server group.
+    struct rtr_mgr_group *group = rtr_create_mgr_group(
+        rtr_create_rtr_socket(
+            rtr_create_tcp_socket(rtr_create_tcp_config(host, port))
         ),
         1
     );
 
     // Initialize RTR manager and bail out on error.
-    if (rtr_mgr_init(result, 240, 520, callback) == RTR_ERROR) {
+    result = rtr_mgr_init(group, 1, 240, 520, callback, 0, 0);
+    if (!result) {
         fprintf(stderr, "Error initializing RTR manager.");
         return 0;
     }
