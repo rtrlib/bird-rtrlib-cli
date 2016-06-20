@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with BIRD-RTRlib-CLI; see the file COPYING.
  *
- * written by Mehmet Ceyran, in cooperation with:
+ * written by smlng and Mehmet Ceyran, in cooperation with:
  * CST group, Freie Universitaet Berlin
  * Website: https://github.com/rtrlib/bird-rtrlib-cli
  */
