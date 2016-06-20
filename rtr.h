@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with BIRD-RTRlib-CLI; see the file COPYING.
  *
- * written by Mehmet Ceyran, in cooperation with:
+ * written by smlng, Mehmet Ceyran, in cooperation with:
  * CST group, Freie Universitaet Berlin
  * Website: https://github.com/rtrlib/bird-rtrlib-cli
  */
@@ -25,46 +25,32 @@
 #include <rtrlib/rtrlib.h>
 
 /**
- * Connects to the specified SSH server using the specified callback function
- * for RTR updates and returns the corresponding `rtr_mgr_config` structure.
- * Returns a null pointer on error.
- * @param host host name of the SSH server.
- * @param port port number of the SSH server in string representation.
- * @param bindaddr host name or IP address the RTR connection shall be made from
- * (null pointer for any).
- * @param hostkey_file path to a file containing the host key of the specified
- * server. If set to a null pointer, the default known_hosts file is used.
- * @param username name of the user to be authenticated with the SSH server.
- * @param privkey_file path to a file containing the private key to be used for
- * authentication with the SSH server. If set to a null pointer, the user's
- * default identity is used.
- * @param callback callback function for RTR updates.
+ * Creates and returns a new `tr_ssh_config` structure for an SSH connection to
+ * the specified specified host and port, authenticated by the optional hostkey
+ * path, with the specified user authenticated by the key pair.
+ * @param host
+ * @param port
+ * @param server_hostkey_path
+ * @param username
+ * @param client_privkey_path
  * @return
  */
-struct rtr_mgr_config *rtr_ssh_connect(
-    const char *, const char *, const char *, const char *, const char *,
-    const char *, const pfx_update_fp
-);
+struct tr_ssh_config *rtr_create_ssh_config(const char *host,
+                                            const char *port,
+                                            const char *bindaddr,
+                                            const char *server_hostkey_path,
+                                            const char *username,
+                                            const char *client_privkey_path);
 
 /**
- * Connects to the RTR server with the specified parameters and returns the
- * corresponding `rtr_mgr_config` structure. Returns a null pointer on error.
- * @param host host name of the TCP server.
- * @param port port number of the TCP server in string representation.
- * @param bindaddr host name or IP address the RTR connection shall be made from
- * (null pointer for any).
- * @param callback callback function for RTR updates.
+ * Creates and returns a new `tr_tcp_config` structure from the specified host
+ * and port.
+ * @param host
+ * @param port
  * @return
  */
-struct rtr_mgr_config *rtr_tcp_connect(
-    const char *, const char *, const char *, const pfx_update_fp
-);
-
-/**
- * Stops the RTR manager with the specified config and frees all resources
- * allocated by `rtr_connect()`.
- * @param rtr_config
- */
-void rtr_close(struct rtr_mgr_config *);
+struct tr_tcp_config *rtr_create_tcp_config(const char *host,
+                                            const char *port,
+                                            const char *bindaddr);
 
 #endif

@@ -33,19 +33,19 @@
 int config_check(const struct config *config) {
     // Check BIRD control socket path availability.
     if (!config->bird_socket_path) {
-        fprintf(stderr, "Missing path to BIRD control socket.");
+        fprintf(stderr, "Missing path to BIRD control socket.\n");
         return 0;
     }
 
     // Check RTR host availability.
     if (!config->rtr_host) {
-        fprintf(stderr, "Missing RTR server host.");
+        fprintf(stderr, "Missing RTR server host.\n");
         return 0;
     }
 
     // Check RTR port availability.
     if (!config->rtr_port) {
-        fprintf(stderr, "Missing RTR server port.");
+        fprintf(stderr, "Missing RTR server port.\n");
         return 0;
     }
 
@@ -53,7 +53,7 @@ int config_check(const struct config *config) {
     if (config->rtr_connection_type == ssh) {
         // Check SSH username availability.
         if (!config->rtr_ssh_username) {
-            fprintf(stderr, "Missing SSH username.");
+            fprintf(stderr, "Missing SSH username.\n");
             return 0;
         }
     }
