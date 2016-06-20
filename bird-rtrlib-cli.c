@@ -217,8 +217,8 @@ int main(int argc, char *argv[]) {
     }
 
     struct tr_socket tr_sock;
-	struct tr_tcp_config *tcp_config;
-	struct tr_ssh_config *ssh_config;
+    struct tr_tcp_config *tcp_config;
+    struct tr_ssh_config *ssh_config;
 
     // Try to connect to the RTR server depending on the requested connection
     // type.
@@ -241,27 +241,27 @@ int main(int argc, char *argv[]) {
     }
 
     struct rtr_socket rtr;
-	struct rtr_mgr_config *conf;
-	struct rtr_mgr_group groups[1];
+    struct rtr_mgr_config *conf;
+    struct rtr_mgr_group groups[1];
 
-	rtr.tr_socket = &tr_sock;
-	groups[0].sockets_len = 1;
-	groups[0].sockets = malloc(1 * sizeof(rtr));
-	groups[0].sockets[0] = &rtr;
-	groups[0].preference = 1;
+    rtr.tr_socket = &tr_sock;
+    groups[0].sockets_len = 1;
+    groups[0].sockets = malloc(1 * sizeof(rtr));
+    groups[0].sockets[0] = &rtr;
+    groups[0].preference = 1;
 
-	int ret = rtr_mgr_init(&conf, groups, 1, 240, 520, 600,
+    int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600,
                            pfx_update_callback, NULL, NULL, NULL);
 
-	if (ret == RTR_ERROR)
-		printf("Error in rtr_mgr_init!\n");
-	else if (ret == RTR_INVALID_PARAM)
-		printf("Invalid params passed to rtr_mgr_init\n");
+    if (ret == RTR_ERROR)
+        printf("Error in rtr_mgr_init!\n");
+    else if (ret == RTR_INVALID_PARAM)
+        printf("Invalid params passed to rtr_mgr_init\n");
 
-	if (!conf)
-		return EXIT_FAILURE;
+    if (!conf)
+        return EXIT_FAILURE;
 
-	rtr_mgr_start(conf);
+    rtr_mgr_start(conf);
 
     // Server loop. Read commands from stdin.
     while (getline(&command, &command_len, stdin) != -1) {
@@ -271,8 +271,8 @@ int main(int argc, char *argv[]) {
 
     // Clean up RTRLIB memory.
     rtr_mgr_stop(conf);
-	rtr_mgr_free(conf);
-	free(groups[0].sockets);
+    rtr_mgr_free(conf);
+    free(groups[0].sockets);
 
     // Close BIRD socket.
     close(bird_socket);

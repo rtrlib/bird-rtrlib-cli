@@ -37,10 +37,14 @@ struct tr_ssh_config *rtr_create_ssh_config(const char *host,
     memset(result, 0, sizeof (struct tr_ssh_config));
 
     // Assign host, port and username (mandatory).
-    result->host = strdup(host);
-    unsigned int iport = atoi(port);
-    result->port = iport;
-    result->username = strdup(username);
+    if (host)
+        result->host = strdup(host);
+    if (port) {
+        unsigned int iport = atoi(port);
+        result->port = iport;
+    }
+    if (username)
+        result->username = strdup(username);
 
     // Assign bind address if available.
     if (bindaddr)
@@ -64,9 +68,12 @@ struct tr_tcp_config *rtr_create_tcp_config(
     memset(result, 0, sizeof (struct tr_tcp_config));
 
     // Populate result.
-    result->host = strdup(host);
-    result->port = strdup(port);
-    result->bindaddr = strdup(bindaddr);
+    if(host)
+        result->host = strdup(host);
+    if (port)
+        result->port = strdup(port);
+    if (bindaddr)
+        result->bindaddr = strdup(bindaddr);
 
     // Return result.
     return result;
