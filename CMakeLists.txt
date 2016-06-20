@@ -1,7 +1,36 @@
 project(bird-rtrlib-cli)
 cmake_minimum_required(VERSION 2.6)
+
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99")
+
+include_directories(.)
+find_package(Argp)
+if(ARGP_FOUND)
+    message(STATUS "argp found.")
+else()
+    message(FATAL_ERROR "argp not found!")
+endif(ARGP_FOUND)
+
+if(NOT RTRLIB_INCLUDE AND NOT RTRLIB_LIBRARY)
+    find_package(Rtr)
+    if(RTR_FOUND)
+        message(STATUS "rtrlib found.")
+    else()
+        message(FATAL_ERROR "rtrlib not found!")
+    endif(RTR_FOUND)
+else()
+    set(RTR_INCLUDE_DIRS ${RTRLIB_INCLUDE})
+    set(RTR_LIBRARIES ${RTRLIB_LIBRARY})
+endif(NOT RTRLIB_INCLUDE AND NOT RTRLIB_LIBRARY)
+
+find_package(LibSSH 0.6.0)
+if(LIBSSH_FOUND)
+    message(STATUS "libssh found.")
+else()
+    message(FATAL_ERROR "libssh not found!")
+endif(LIBSSH_FOUND)
+
+include_directories(${ARGP_INCLUDE_DIRS} ${LIBSSH_INCLUDE_DIRS} ${RTR_INCLUDE_DIRS} ${INCLUDE_DIRECTORIES})
 add_executable(bird-rtrlib-cli bird-rtrlib-cli.c bird.c rtr.c cli.c config.c)
-
-include_directories(${RTRLIB_INCLUDE} ${INCLUDE_DIRECTORIES})
-
-target_link_libraries(bird-rtrlib-cli rtr)
+target_link_libraries(bird-rtrlib-cli ${ARGP_LIBRARIES} ${RTR_LIBRARIES})
