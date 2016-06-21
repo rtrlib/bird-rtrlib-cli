@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with BIRD-RTRlib-CLI; see the file COPYING.
  *
- * written by Mehmet Ceyran, in cooperation with:
+ * written by smlng and Mehmet Ceyran, in cooperation with:
  * CST group, Freie Universitaet Berlin
  * Website: https://github.com/rtrlib/bird-rtrlib-cli
  */
@@ -26,6 +26,7 @@
 #include <syslog.h>
 #include <netinet/in.h>
 
+#include "bird.h"
 #include "cli.h"
 #include "config.h"
 #include "rtr.h"
@@ -44,9 +45,6 @@ static size_t bird_command_length = -1;
 // "add roa" BIRD command "table" part. Defaults to an empty string and becomes
 // "table " + config->bird_roa_table if provided.
 static char *bird_add_roa_table_arg = "";
-
-// RTR manager config.
-static struct rtr_mgr_config *rtr_config = 0;
 
 /**
  * Performs cleanup on resources allocated by `init()`.
@@ -130,9 +128,10 @@ void init_bird_command(void) {
  * @param record
  * @param added
  */
-void rtr_callback(
-    struct pfx_table *table, const struct pfx_record record, const bool added
-) {
+static void pfx_update_callback(struct pfx_table *table,
+                                const struct pfx_record record,
+                                const bool added)
+{
     // IP address buffer.
     static char ip_addr_str[INET6_ADDRSTRLEN];
 
@@ -140,7 +139,7 @@ void rtr_callback(
     static char bird_response[200];
 
     // Fetch IP address as string.
-    ip_addr_to_str(&(record.prefix), ip_addr_str, sizeof(ip_addr_str));
+    lrtr_ip_addr_to_str(&(record.prefix), ip_addr_str, sizeof(ip_addr_str));
 
     // Write BIRD command to buffer.
     if (
@@ -217,29 +216,52 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    struct tr_socket tr_sock;
+    struct tr_tcp_config *tcp_config;
+    struct tr_ssh_config *ssh_config;
+
     // Try to connect to the RTR server depending on the requested connection
     // type.
     switch (config.rtr_connection_type) {
         case tcp:
-            rtr_config = rtr_tcp_connect(
-                config.rtr_host, config.rtr_port, config.rtr_bind_addr,
-                &rtr_callback
-            );
+            tcp_config = rtr_create_tcp_config(
+                config.rtr_host, config.rtr_port, config.rtr_bind_addr);
+            tr_tcp_init(tcp_config, &tr_sock);
             break;
         case ssh:
-            rtr_config = rtr_ssh_connect(
+            ssh_config = rtr_create_ssh_config(
                 config.rtr_host, config.rtr_port, config.rtr_bind_addr,
                 config.rtr_ssh_hostkey_file, config.rtr_ssh_username,
-                config.rtr_ssh_privkey_file, &rtr_callback
-            );
+                config.rtr_ssh_privkey_file);
+            tr_ssh_init(ssh_config, &tr_sock);
             break;
+        default:
+            cleanup();
+            return EXIT_FAILURE;
     }
 
-    // Bail out if connection cannot be established.
-    if (!rtr_config) {
-        cleanup();
+    struct rtr_socket rtr;
+    struct rtr_mgr_config *conf;
+    struct rtr_mgr_group groups[1];
+
+    rtr.tr_socket = &tr_sock;
+    groups[0].sockets_len = 1;
+    groups[0].sockets = malloc(1 * sizeof(rtr));
+    groups[0].sockets[0] = &rtr;
+    groups[0].preference = 1;
+
+    int ret = rtr_mgr_init(&conf, groups, 1, 30, 600, 600,
+                           pfx_update_callback, NULL, NULL, NULL);
+
+    if (ret == RTR_ERROR)
+        printf("Error in rtr_mgr_init!\n");
+    else if (ret == RTR_INVALID_PARAM)
+        printf("Invalid params passed to rtr_mgr_init\n");
+
+    if (!conf)
         return EXIT_FAILURE;
-    };
+
+    rtr_mgr_start(conf);
 
     // Server loop. Read commands from stdin.
     while (getline(&command, &command_len, stdin) != -1) {
@@ -248,7 +270,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Clean up RTRLIB memory.
-    rtr_close(rtr_config);
+    rtr_mgr_stop(conf);
+    rtr_mgr_free(conf);
+    free(groups[0].sockets);
 
     // Close BIRD socket.
     close(bird_socket);

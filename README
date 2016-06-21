@@ -31,7 +31,7 @@ Compilation
 
   RTRlib was installed in a non-default directory <rtrlib>
 
-    cmake -D RTRLIB_INCLUDE=<rtrlib> .
+    cmake -DRTRLIB_INCLUDE=<rtrlib> -DRTRLIB_LIBRARY=</path/to/rtrlib.[a|so|dylib]> .
 
 
 * Build the command line interface
@@ -58,4 +58,3 @@ Contact
 -------
 
 Mailing List: rtrlib@googlegroups.com
-

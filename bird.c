@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with BIRD-RTRlib-CLI; see the file COPYING.
  *
- * written by Mehmet Ceyran, in cooperation with:
+ * written by smlng and Mehmet Ceyran, in cooperation with:
  * CST group, Freie Universitaet Berlin
  * Website: https://github.com/rtrlib/bird-rtrlib-cli
  */
@@ -23,13 +23,10 @@
 #include <syslog.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <unistd.h>
 
-/**
- * Connects to the BIRD daemon listening at the specified socket. Returns the
- * socket on success or -1 on failure.
- * @param socket_path
- * @return
- */
+#include "bird.h"
+
 int bird_connect(const char *socket_path) {
     // Result value containing the socket to the BIRD.
     int bird_socket = -1;
