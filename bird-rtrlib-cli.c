@@ -165,7 +165,7 @@ static void pfx_update_callback(struct pfx_table *table,
     write(bird_socket, bird_command, strlen(bird_command));
 
     // Fetch the answer and log.
-    bird_response[read(bird_socket, bird_response, sizeof bird_response)] = 0;
+    bird_response[read(bird_socket, bird_response, sizeof(bird_response)-1)] = 0;
     syslog(LOG_INFO, "From BIRD: %s", bird_response);
 }
 
