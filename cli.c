@@ -35,10 +35,10 @@
 #define ARGKEY_RTRSSH_USERNAME 0x103
 
 // Parser function for argp_parse().
-static error_t argp_parser(int key, char *arg, struct argp_state *state) {
+static error_t argp_parser(int key, char *arg, struct argp_state *state)
+{
     // Shortcut to config object passed to argp_parse().
     struct config *config = state->input;
-
     // Process command line argument.
     switch (key) {
         case ARGKEY_BIRD_ROA_TABLE:
@@ -71,13 +71,13 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state) {
             // Process unknown argument.
             return ARGP_ERR_UNKNOWN;
     }
-
     // Return success.
     return 0;
 }
 
 // Parses the specified command line arguments into the program config.
-int parse_cli(int argc, char **argv, struct config *config) {
+int parse_cli(int argc, char **argv, struct config *config)
+{
     // Command line options definition.
     const struct argp_option argp_options[] = {
         {
@@ -150,7 +150,6 @@ int parse_cli(int argc, char **argv, struct config *config) {
         },
         {0}
     };
-
     // argp structure to be passed to argp_parse().
     const struct argp argp = {
         argp_options,
@@ -161,10 +160,8 @@ int parse_cli(int argc, char **argv, struct config *config) {
         NULL,
         NULL
     };
-
     // Parse command line. Exits on errors.
     argp_parse(&argp, argc, argv, 0, NULL, config);
-
     // Return success.
     return 1;
 }

@@ -35,7 +35,6 @@ struct tr_ssh_config *rtr_create_ssh_config(const char *host,
     // Initialize result.
     struct tr_ssh_config *result = malloc(sizeof (struct tr_ssh_config));
     memset(result, 0, sizeof (struct tr_ssh_config));
-
     // Assign host, port and username (mandatory).
     if (host)
         result->host = strdup(host);
@@ -45,28 +44,25 @@ struct tr_ssh_config *rtr_create_ssh_config(const char *host,
     }
     if (username)
         result->username = strdup(username);
-
     // Assign bind address if available.
     if (bindaddr)
         result->bindaddr = strdup(bindaddr);
-
     // Assign key paths (optional).
     if (server_hostkey_path)
         result->server_hostkey_path = strdup(server_hostkey_path);
     if (client_privkey_path)
         result->client_privkey_path = strdup(client_privkey_path);
-
     // Return result.
     return result;
 }
 
-struct tr_tcp_config *rtr_create_tcp_config(
-    const char *host, const char *port, const char *bindaddr)
+struct tr_tcp_config *rtr_create_tcp_config(const char *host,
+                                            const char *port,
+                                            const char *bindaddr)
 {
     // Initialize result.
-    struct tr_tcp_config *result = malloc(sizeof (struct tr_tcp_config));
-    memset(result, 0, sizeof (struct tr_tcp_config));
-
+    struct tr_tcp_config *result = malloc(sizeof(struct tr_tcp_config));
+    memset(result, 0, sizeof(struct tr_tcp_config));
     // Populate result.
     if(host)
         result->host = strdup(host);
@@ -74,7 +70,6 @@ struct tr_tcp_config *rtr_create_tcp_config(
         result->port = strdup(port);
     if (bindaddr)
         result->bindaddr = strdup(bindaddr);
-
     // Return result.
     return result;
 }

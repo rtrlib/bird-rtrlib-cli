@@ -24,11 +24,8 @@
 
 /// Specifies a type of server connection to be used.
 enum connection_type {
-    // Plain TCP connection
-    tcp,
-
-    // SSH connection
-    ssh
+    tcp, // Plain TCP connection
+    ssh // SSH connection
 };
 
 /**
