@@ -13,8 +13,8 @@ changes to the BIRD code base. The program runs in parallel to the BIRD
 daemon and communicates with the daemon via the BIRD control socket.
 
 
-Requierements
--------------
+Requirements
+------------
 
 To build the command line interface, (1) the CMake build system, (2)
 RTRlib with SSH support, and (3) BIRD must be installed.
