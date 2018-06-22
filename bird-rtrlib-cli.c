@@ -93,11 +93,7 @@ void cleanup_bird_command(void)
  */
 void init(void)
 {
-    if (config.quiet == true) {
-        openlog(NULL, LOG_PERROR, LOG_DAEMON);
-    } else {
-        openlog(NULL, LOG_PERROR | LOG_CONS | LOG_PID, LOG_DAEMON);
-    }
+    openlog(NULL, LOG_PERROR | LOG_CONS | LOG_PID, LOG_DAEMON);
 }
 
 /**
@@ -156,19 +152,22 @@ static void pfx_update_callback(struct pfx_table *table,
     // Fetch IP address as string.
     lrtr_ip_addr_to_str(&(record.prefix), ip_addr_str, sizeof(ip_addr_str));
     // Crude way of filtering out sending Bird the wrong kind of updates
-    int prefix_allowed = 0;
-    if (strchr(ip_addr_str,'.') != NULL)
+    if (config.ip_version)
     {
-        if ( strchr(config.ip_version, '4') != NULL )  
-	     prefix_allowed++;
+        int prefix_allowed = 0;
+        if (strchr(ip_addr_str,'.') != NULL)
+        {
+            if ( strchr(config.ip_version, '4') != NULL )  
+	         prefix_allowed++;
+        }
+        if (strchr(ip_addr_str,':') != NULL)
+        {
+            if ( strchr(config.ip_version, '6') != NULL )  
+                 prefix_allowed++;
+        }
+        if (prefix_allowed == 0) 
+    	    return;
     }
-    if (strchr(ip_addr_str,':') != NULL)
-    {
-        if ( strchr(config.ip_version, '6') != NULL )  
-	     prefix_allowed++;
-    }
-    if (prefix_allowed == 0) 
-	    return;
     // Write BIRD command to buffer.
     if (
         snprintf(
@@ -309,6 +308,11 @@ int main(int argc, char *argv[])
     // start rtr_mgr
     rtr_mgr_start(conf);
     // Server loop. Read commands from stdin.
+    fprintf(stdout, "bird-rtrlib-cli connected to %s:%s ready for IP versions %s.\nType 'exit' to clean up and quit.\n",
+		    config.rtr_host,
+		    config.rtr_port,
+		    config.ip_version ? config.ip_version : "all"
+    );
     while (getline(&command, &command_len, stdin) != -1) {
         if (strncmp(command, CMD_EXIT, strlen(CMD_EXIT)) == 0)
             break;
