@@ -53,7 +53,8 @@ static struct config config;
  */
 void sigpipe_handler(int signum)
 {
-    syslog(LOG_ERR, "Caught SIGPIPE %d.", signum);
+    if (config.quiet != true) 
+        syslog(LOG_ERR, "Caught SIGPIPE %d.", signum);
 }
 
 /**
@@ -92,7 +93,11 @@ void cleanup_bird_command(void)
  */
 void init(void)
 {
-    openlog(NULL, LOG_PERROR | LOG_CONS | LOG_PID, LOG_DAEMON);
+    if (config.quiet == true) {
+        openlog(NULL, LOG_PERROR, LOG_DAEMON);
+    } else {
+        openlog(NULL, LOG_PERROR | LOG_CONS | LOG_PID, LOG_DAEMON);
+    }
 }
 
 /**
@@ -150,6 +155,20 @@ static void pfx_update_callback(struct pfx_table *table,
     static char bird_response[BIRD_RSP_SIZE];
     // Fetch IP address as string.
     lrtr_ip_addr_to_str(&(record.prefix), ip_addr_str, sizeof(ip_addr_str));
+    // Crude way of filtering out sending Bird the wrong kind of updates
+    int prefix_allowed = 0;
+    if (strchr(ip_addr_str,'.') != NULL)
+    {
+        if ( strchr(config.ip_version, '4') != NULL )  
+	     prefix_allowed++;
+    }
+    if (strchr(ip_addr_str,':') != NULL)
+    {
+        if ( strchr(config.ip_version, '6') != NULL )  
+	     prefix_allowed++;
+    }
+    if (prefix_allowed == 0) 
+	    return;
     // Write BIRD command to buffer.
     if (
         snprintf(
@@ -169,11 +188,13 @@ static void pfx_update_callback(struct pfx_table *table,
         return;
     }
     // Log the BIRD command and send it to the BIRD server.
-    syslog(LOG_INFO, "To BIRD: %s", bird_command);
+    if (config.quiet != true) 
+        syslog(LOG_INFO, "To BIRD: %s", bird_command);
     // reconnect bird_socket on SIGPIPE error, and resend BIRD command
     while ((write(bird_socket, bird_command, strlen(bird_command)) < 0) &&
            (errno == EPIPE)) {
-        syslog(LOG_ERR, "BIRD socket send failed, try reconnect!");
+        if (config.quiet != true) 
+            syslog(LOG_ERR, "BIRD socket send failed, try reconnect!");
         close(bird_socket);
         bird_socket = bird_connect(config.bird_socket_path);
     }
@@ -188,7 +209,8 @@ static void pfx_update_callback(struct pfx_table *table,
     // log answer, if any valid response
     if (size > 0) {
         bird_response[size] = 0;
-        syslog(LOG_INFO, "From BIRD: %s", bird_response);
+        if (config.quiet != true) 
+            syslog(LOG_INFO, "From BIRD: %s", bird_response);
     }
 }
 

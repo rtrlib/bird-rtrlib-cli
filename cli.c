@@ -33,6 +33,8 @@
 #define ARGKEY_RTRSSH_HOSTKEY 0x101
 #define ARGKEY_RTRSSH_PRIVKEY 0x102
 #define ARGKEY_RTRSSH_USERNAME 0x103
+#define ARGKEY_IP_VERSION 'v'
+#define ARGKEY_QUIET 'q'
 
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state)
@@ -67,6 +69,12 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state)
         case ARGKEY_RTRSSH_USERNAME:
             config->rtr_ssh_username = arg;
             break;
+	case ARGKEY_IP_VERSION:
+	    config->ip_version = arg;
+	    break;
+	case ARGKEY_QUIET:
+	    config->quiet = true;
+	    break;
         default:
             // Process unknown argument.
             return ARGP_ERR_UNKNOWN;
@@ -148,6 +156,22 @@ int parse_cli(int argc, char **argv, struct config *config)
             "used. Uses the user's default identity file if not specified.",
             2
         },
+	{
+	    "version",
+	    ARGKEY_IP_VERSION,
+	    "<4|6>",
+	    0,
+	    "(Optional) Indicate if the bird daemon wants IPv4 or IPv6 only updates.",
+	    2
+	},
+	{
+	    "quiet",
+	    ARGKEY_QUIET,
+	    0,
+	    0,
+	    "(Optional) Report only errors.",
+	    1
+	},
         {0}
     };
     // argp structure to be passed to argp_parse().

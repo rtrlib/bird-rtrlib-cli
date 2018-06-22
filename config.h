@@ -28,6 +28,8 @@ enum connection_type {
     ssh // SSH connection
 };
 
+typedef enum { false, true } bool;
+
 /**
  * Application configuration structure.
  */
@@ -41,6 +43,8 @@ struct config {
     char *rtr_ssh_username;
     char *rtr_ssh_hostkey_file;
     char *rtr_ssh_privkey_file;
+    char *ip_version;
+    bool quiet;
 };
 
 /**
