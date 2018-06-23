@@ -35,6 +35,8 @@
 #define ARGKEY_RTRSSH_USERNAME 0x103
 #define ARGKEY_IP_VERSION 'v'
 #define ARGKEY_QUIET 'q'
+#define ARGKEY_DAEMON 'd'
+#define ARGKEY_PIDFILE 'p'
 
 // Parser function for argp_parse().
 static error_t argp_parser(int key, char *arg, struct argp_state *state)
@@ -75,6 +77,12 @@ static error_t argp_parser(int key, char *arg, struct argp_state *state)
 	case ARGKEY_QUIET:
 	    config->quiet = true;
 	    break;
+	case ARGKEY_DAEMON:
+	    config->daemon = true;
+	    break;
+	case ARGKEY_PIDFILE:
+            config->pidfile = arg;
+            break;
         default:
             // Process unknown argument.
             return ARGP_ERR_UNKNOWN;
@@ -171,6 +179,22 @@ int parse_cli(int argc, char **argv, struct config *config)
 	    0,
 	    "(Optional) Report only errors.",
 	    1
+	},
+	{
+	    "daemon",
+	    ARGKEY_DAEMON,
+	    0,
+	    0,
+	    "(Optional) run as daemon, detach from terminal.",
+	    1
+	},
+	{
+	    "pidfile",
+	    ARGKEY_PIDFILE,
+	    "<PIDFILE>",
+	    0,
+	    "(Optional) Name of the pidfile",
+	    2
 	},
         {0}
     };

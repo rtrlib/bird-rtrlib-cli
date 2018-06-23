@@ -45,6 +45,8 @@ struct config {
     char *rtr_ssh_privkey_file;
     char *ip_version;
     bool quiet;
+    bool daemon;
+    char *pidfile;
 };
 
 /**
