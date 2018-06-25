@@ -27,6 +27,9 @@
 #include <string.h>
 #include <syslog.h>
 #include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "bird.h"
 #include "cli.h"
@@ -47,13 +50,45 @@ static size_t bird_command_length = -1;
 static char *bird_add_roa_table_arg = "";
 // Main configuration.
 static struct config config;
+// for daemon loop
+static int time_to_die = 0;
+// fopr pidfile
+static int pid_fd = -1;
 
 /**
  * Handle SIGPIPE on bird_socket, write error log entry
  */
 void sigpipe_handler(int signum)
 {
-    syslog(LOG_ERR, "Caught SIGPIPE %d.", signum);
+    if (config.quiet != true) 
+        syslog(LOG_ERR, "Caught SIGPIPE %d.", signum);
+}
+
+void sigkill_handler(int signum)
+{
+	syslog(LOG_INFO, "Got kill signal, cleaning up and exiting.");
+	/* Unlock and close lockfile */
+	if (pid_fd != -1) {
+		lockf(pid_fd, F_ULOCK, 0);
+		close(pid_fd);
+	}
+	/* Try to delete lockfile */
+	if (config.pidfile != NULL) {
+		unlink(config.pidfile);
+	}
+	time_to_die++;
+}
+
+void create_pidfile()
+{
+    char str[256];
+    pid_fd = open(config.pidfile, O_RDWR|O_CREAT, 0640);
+    if (pid_fd < 0) 
+	exit(EXIT_FAILURE);
+    if (lockf(pid_fd, F_TLOCK, 0) < 0) 
+        exit(EXIT_FAILURE);
+    sprintf(str,"%d\n", getpid());
+    write(pid_fd, str, strlen(str));
 }
 
 /**
@@ -150,6 +185,18 @@ static void pfx_update_callback(struct pfx_table *table,
     static char bird_response[BIRD_RSP_SIZE];
     // Fetch IP address as string.
     lrtr_ip_addr_to_str(&(record.prefix), ip_addr_str, sizeof(ip_addr_str));
+    // Crude way of filtering out sending Bird the wrong kind of updates
+    if (config.ip_version)
+    {
+        int prefix_allowed = 0;
+	// Is this an IPv4 prefix?
+        if ((strchr(ip_addr_str,'.') != NULL) && (strchr(config.ip_version, '4') != NULL) )  
+	    prefix_allowed++;
+        if ((strchr(ip_addr_str,':') != NULL) && (strchr(config.ip_version, '6') != NULL) )  
+            prefix_allowed++;
+        if (prefix_allowed == 0) 
+    	    return;
+    }
     // Write BIRD command to buffer.
     if (
         snprintf(
@@ -169,11 +216,13 @@ static void pfx_update_callback(struct pfx_table *table,
         return;
     }
     // Log the BIRD command and send it to the BIRD server.
-    syslog(LOG_INFO, "To BIRD: %s", bird_command);
+    if (config.quiet != true) 
+        syslog(LOG_INFO, "To BIRD: %s", bird_command);
     // reconnect bird_socket on SIGPIPE error, and resend BIRD command
     while ((write(bird_socket, bird_command, strlen(bird_command)) < 0) &&
            (errno == EPIPE)) {
-        syslog(LOG_ERR, "BIRD socket send failed, try reconnect!");
+        if (config.quiet != true) 
+            syslog(LOG_ERR, "BIRD socket send failed, try reconnect!");
         close(bird_socket);
         bird_socket = bird_connect(config.bird_socket_path);
     }
@@ -188,7 +237,13 @@ static void pfx_update_callback(struct pfx_table *table,
     // log answer, if any valid response
     if (size > 0) {
         bird_response[size] = 0;
-        syslog(LOG_INFO, "From BIRD: %s", bird_response);
+	// Any bird response that doesn't start with 0000 is bad
+	if ((strstr(bird_response, "0000") == NULL) && (strstr(bird_response, "0001") == NULL))
+		syslog(LOG_ERR,"Bird command %s resulted in: %s\n", bird_command, bird_response);
+//	else
+//		fprintf (stdout,"%s %s/%d \t", added ? "add" : "del", ip_addr_str, record.min_len);
+        if (config.quiet != true) 
+            syslog(LOG_INFO, "From BIRD: %s", bird_response);
     }
 }
 
@@ -200,6 +255,7 @@ static void pfx_update_callback(struct pfx_table *table,
  */
 int main(int argc, char *argv[])
 {
+
     // Buffer for commands and its length.
     char *command = 0;
     size_t command_len = 0;
@@ -219,6 +275,33 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Invalid configuration parameters!\n");
         return EXIT_FAILURE;
     }
+    pid_t process_id = 0;
+    pid_t sid = 0;
+
+    // Launch daemon if configured
+    if (config.daemon == true)
+    {
+	    process_id = fork ();
+	    // fork failed
+	    if (process_id < 0)
+	    {
+		    fprintf(stderr,"fork failed!\n");
+		    exit(1);
+	    }
+	    // Parent process, end it
+	    if (process_id > 0) 
+		    exit(0);
+
+	    // We're now in the child process
+	    if (config.pidfile != NULL) 
+		    create_pidfile();
+	    syslog(LOG_INFO, "initiated and running.");
+	    sid = setsid();
+	    if (sid < 0)
+		    exit(1);
+	    chdir ("/");
+    }
+
     // Setup BIRD ROA table command argument.
     if (config.bird_roa_table) {
         init_bird_add_roa_table_arg(config.bird_roa_table);
@@ -229,7 +312,7 @@ int main(int argc, char *argv[])
     bird_socket = bird_connect(config.bird_socket_path);
     if (bird_socket == -1) {
         cleanup();
-        fprintf(stderr, "Failed to connect to BIRD socket!\n");
+        syslog(LOG_ERR, "Failed to connect to BIRD socket!\n");
         return EXIT_FAILURE;
     }
 
@@ -252,7 +335,7 @@ int main(int argc, char *argv[])
             break;
         default:
             cleanup();
-            fprintf(stderr, "Invalid connection type, use tcp or ssh!\n");
+            syslog(LOG_ERR, "Invalid connection type, use tcp or ssh!\n");
             return EXIT_FAILURE;
     }
 
@@ -270,26 +353,47 @@ int main(int argc, char *argv[])
                            pfx_update_callback, NULL, NULL, NULL);
     // check for init errors
     if (ret == RTR_ERROR) {
-        fprintf(stderr, "Error in rtr_mgr_init!\n");
+        syslog(LOG_ERR, "Error in rtr_mgr_init!\n");
         return EXIT_FAILURE;
     }
     else if (ret == RTR_INVALID_PARAM) {
-        fprintf(stderr, "Invalid params passed to rtr_mgr_init\n");
+        syslog(LOG_ERR, "Invalid params passed to rtr_mgr_init\n");
         return EXIT_FAILURE;
     }
     // check if rtr_mgr config valid
     if (!conf) {
-        fprintf(stderr, "No config for rtr manager!\n");
+        syslog(LOG_ERR, "No config for rtr manager!\n");
         return EXIT_FAILURE;
     }
     // set handler for SIGPIPE
     signal(SIGPIPE, sigpipe_handler);
+    // set handler for SIGKILL and SIGTERM
+    signal(SIGKILL, sigkill_handler);
+    signal(SIGTERM, sigkill_handler);
     // start rtr_mgr
     rtr_mgr_start(conf);
-    // Server loop. Read commands from stdin.
-    while (getline(&command, &command_len, stdin) != -1) {
-        if (strncmp(command, CMD_EXIT, strlen(CMD_EXIT)) == 0)
-            break;
+
+    if (config.daemon == true)
+    {
+	    close(STDIN_FILENO);
+	    close(STDOUT_FILENO);
+	    close(STDERR_FILENO);
+	    // Child loop
+	    while(time_to_die == 0)
+		    sleep(1);
+    }
+    else
+    {
+	    fprintf(stdout, "bird-rtrlib-cli connected to %s:%s ready for IP versions %s.\nType 'exit' to clean up and quit.\n",
+		    config.rtr_host,
+		    config.rtr_port,
+		    config.ip_version ? config.ip_version : "all"
+            );
+	    // CLI loop. Read commands from stdin.
+	    while (getline(&command, &command_len, stdin) != -1) {
+	        if (strncmp(command, CMD_EXIT, strlen(CMD_EXIT)) == 0)
+	            break;
+    	    }
     }
     // Clean up RTRLIB memory.
     rtr_mgr_stop(conf);
