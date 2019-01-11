@@ -202,7 +202,7 @@ static void pfx_update_callback(struct pfx_table *table,
         snprintf(
             bird_command,
             bird_command_length,
-            "%s roa %s/%d max %d as %d%s\n",
+            "%s roa %s/%u max %u as %u%s\n",
             added ? "add" : "delete",
             ip_addr_str,
             record.min_len,
